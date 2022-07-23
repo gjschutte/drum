@@ -39,11 +39,6 @@ beat_changed = True
 save_menu = False
 load_menu = False
 saved_beats = []
-# svd_beats = []
-# file = open('saved_beats.txt', 'r')
-# for line in file:
-#    saved_beats.append(line)
-# print(saved_beats)
 beat_name = ''
 typing = False
 with open("saved_beats.txt", 'r') as read_beats:
