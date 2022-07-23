@@ -2,6 +2,7 @@
 from re import L
 import pygame
 from pygame import mixer
+import json
 pygame.init()
 
 WIDTH = 1400
@@ -38,12 +39,16 @@ beat_changed = True
 save_menu = False
 load_menu = False
 saved_beats = []
-file = open('saved_beats.txt', 'r')
-for line in file:
-    saved_beats.append(line)
+# svd_beats = []
+# file = open('saved_beats.txt', 'r')
+# for line in file:
+#    saved_beats.append(line)
+# print(saved_beats)
 beat_name = ''
 typing = False
-
+with open("saved_beats.txt", 'r') as read_beats:
+    for line in read_beats:
+        saved_beats.append(json.loads(line))
 
 # Load in sounds
 hi_hat = mixer.Sound('sounds/hi_hat.wav')
@@ -154,26 +159,21 @@ def draw_load_menu(index):
             beat_clicked = []
             row_text = medium_font.render(f'{beat + 1}', True, white)
             screen.blit(row_text, (200, 100 + beat * 50))
-            name_index_start = saved_beats[beat].index('name: ') + 6
-            name_index_end = saved_beats[beat].index(', beats:')
-            name_text = medium_font.render(saved_beats[beat][name_index_start:name_index_end], True, white)
+            name_text = medium_font.render(saved_beats[beat]['name'], True, white)
             screen.blit(name_text, (240, 100 + beat * 50))
         if 0 <= index < len(saved_beats) and beat == index:
-            beat_index_end = saved_beats[beat].index(', bpm:')
-            loaded_beats = int(saved_beats[beat][name_index_end + 8:beat_index_end])
-            bpm_index_end = saved_beats[beat].index(', selected:')
-            loaded_bpm = int(saved_beats[beat][beat_index_end + 6:bpm_index_end])
-            loaded_clicks_string = saved_beats[beat][bpm_index_end + 14: -3]
-            loaded_clicks_rows = list(loaded_clicks_string.split('], ['))
-            for row in range(len(loaded_clicks_rows)):
-                loaded_clicks_row = (loaded_clicks_rows[row].split(', '))
-                for item in range(len(loaded_clicks_row)):
-                    if loaded_clicks_row[item] == '1' or loaded_clicks_row[item] == '-1':
-                        loaded_clicks_row[item] = int(loaded_clicks_row[item])
-                beat_clicked.append(loaded_clicks_row)
-                loaded_clicked = beat_clicked
+            loaded_beats = saved_beats[beat]['beats']
+            loaded_bpm = saved_beats[beat]['bpm']
+            loaded_clicked = saved_beats[beat]['selected']
     loaded_info = [loaded_beats, loaded_bpm, loaded_clicked]
     return exit_btn, loading_btn, delete_btn, loaded_rectangle, loaded_info
+
+def save_function(beat_array):
+    with open('saved_beats.txt', 'w') as json_file:
+        for i in range(len(beat_array)):
+            json.dump(beat_array[i], json_file)
+            if i < (len(beat_array) - 1):
+                json_file.write('\n')
 
 run = True
 while run:
@@ -288,6 +288,7 @@ while run:
                 if delete_button.collidepoint(event.pos):
                     if 0 <= index < len(saved_beats):
                         saved_beats.pop(index)
+                        save_function(saved_beats)
                 if loading_button.collidepoint(event.pos):
                     if 0 <= index < len(saved_beats):
                         beats = loaded_info[0]
@@ -302,11 +303,14 @@ while run:
                     elif not typing:
                         typing = True
                 if saving_button.collidepoint(event.pos):
-                    file = open('saved_beats.txt', 'w')
-                    saved_beats.append(f'\nname: {beat_name}, beats: {beats}, bpm: {bpm}, selected: {clicked}')
-                    for i in range(len(saved_beats)):
-                        file.write(str(saved_beats[i]))
-                    file.close()
+                    beat_to_save = {
+                        "name": beat_name,
+                        "beats": beats,
+                        "bpm": bpm,
+                        "selected": clicked,
+                    }
+                    saved_beats.append(beat_to_save)
+                    save_function(saved_beats)
                     save_menu = False
                     typing = False
                     beat_name = ''
